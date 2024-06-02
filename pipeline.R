@@ -32,6 +32,12 @@ list(
   tar_target(
     TranslatedData,
     translate_to_clpfu(LRData)
+  ),
+
+  # Add matrix names -----------------------------------------------------------
+  tar_target(
+    WithMatnames,
+    add_psut_matnames(TranslatedData)
   )
 
 )
