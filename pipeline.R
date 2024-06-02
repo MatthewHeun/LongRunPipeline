@@ -18,9 +18,20 @@ list(
     format = "file"
   ),
 
-  ## LoadLRData
+
+  # Load long-run data ---------------------------------------------------------
+
+  ## LRData
   tar_target(
-    LoadLRData,
-    command = load_long_run_data(paths = c(ElectricityFilePath, RailFilePath))
+    LRData,
+    load_long_run_data(paths = c(ElectricityFilePath, RailFilePath))
+  ),
+
+
+  # Translate data -------------------------------------------------------------
+  tar_target(
+    TranslatedData,
+    translate_to_clpfu(LRData)
   )
+
 )
