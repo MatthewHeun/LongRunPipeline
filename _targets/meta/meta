@@ -6,5 +6,5 @@ load_long_run_data|function|2f40dd44bc86008d|||||||||||||||
 LRData|stem|34a4d865d6271476|130c2ecefe1608a7|892c0184017c2eb0|346205178||t19876.807468646s|dd4f7d5bc471761c|384039|rds|local|vector|||0.396||
 rail_file|object|e2dedd384638cec1|||||||||||||||
 RailFilePath|stem|3124b88478fd3efe|ef8389a326180a6c|2c530c1562a7fbd1|-1371297235|data/EnergyRecords_Rail_v9.xlsx|t19871.55595753s|b405a2199723bea2|1581819|file|local|vector|||0||
-translate_to_clpfu|function|5468bfacf8ace561|||||||||||||||
-TranslatedData|stem||96391fbfb9bad4ad|678a67ad0cb2f003|-1386319082||t19876.8074693309s||0|rds|local|vector|||0.031||object property not found
+translate_to_clpfu|function|b98a9af11bd450f7|||||||||||||||
+TranslatedData|stem|b02ff26f92d96177|96391fbfb9bad4ad|0fe1507d15b274e9|-1386319082||t19876.8287649201s|91bec74669df2775|381668|rds|local|vector|||0.069||
