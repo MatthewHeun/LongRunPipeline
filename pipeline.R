@@ -38,6 +38,14 @@ list(
   tar_target(
     WithMatnames,
     add_psut_matnames(TranslatedData)
+  ),
+
+  # Convert to PSUT format -----------------------------------------------------
+  tar_target(
+    PSUTLR,
+    make_lr_psut(WithMatnames)
   )
+
+
 
 )

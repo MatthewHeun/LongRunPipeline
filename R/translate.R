@@ -13,6 +13,8 @@ translate_to_clpfu <- function(.df) {
       out_Group = NULL,
       in_Hierarchy = NULL,
       out_Hierarchy = NULL,
+      Country = NULL,
+      Continent = NULL,
       # Adjust energy and exergy strings
       property = dplyr::case_when(
         property == "Energy" ~ "E",
@@ -31,6 +33,12 @@ translate_to_clpfu <- function(.df) {
       in_Unit = NULL,
       out_Unit = NULL,
       Unit = "TJ"
+    ) |>
+    dplyr::rename(
+      EnergyType = property,
+      # Pick up "World" as the Country column
+      Country = Region,
+      Dataset = dataset
     ) |>
     # Eliminate rows where both in_Quantity and out_Quantity are 0
     dplyr::filter(in_Quantity != 0 & out_Quantity != 0) |>
