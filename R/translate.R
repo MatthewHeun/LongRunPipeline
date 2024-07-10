@@ -6,7 +6,15 @@
 #'
 #' @export
 translate_to_clpfu <- function(.df) {
+
+  # Look for all rows where in_Group is duplicated.
+  # We want to keep only one of these for the U matrix.
+  # Then delete them.
+  # duplicated_in_group <- .df |>
+  #   dplyr::filter(in_Group)
+
   .df |>
+    dplyr::filter(in_Group != "Losses") |>
     dplyr::mutate(
       # Get rid of unneeded columns
       in_Group = NULL,

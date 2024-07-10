@@ -109,8 +109,6 @@ make_lr_psut <- function(.df,
                          industry = IEATools::row_col_types$industry,
                          product = IEATools::row_col_types$product) {
 
-  browser()
-
   S_units_df <- .df |>
     calc_S_units(matnames = matnames,
                  rownames = rownames,
