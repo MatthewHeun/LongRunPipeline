@@ -88,7 +88,9 @@ add_psut_matnames <- function(.df,
       t_Efficiency = NULL,
       out_Name = NULL,
       out_Sector = NULL
-    )
+    ) |>
+    # Eliminate duplicated input energy rows.
+    unique()
 }
 
 
