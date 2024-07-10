@@ -61,9 +61,11 @@ add_psut_matnames <- function(.df,
       "{coltypes}" := industry
     )
   # R matrix entries are identified by rows where
-  # the t_Type starts with Primary
+  # the t_Type starts with Primary and
+  # the direction is "in_Quantity".
   R <- .df |>
-    dplyr::filter(startsWith(.data[["t_Type"]], "Primary")) |>
+    dplyr::filter(startsWith(.data[["t_Type"]], "Primary"),
+                  .data[["direction"]] == "in_Quantity") |>
     dplyr::mutate(
       "{matnames}" := R,
       "{rownames}" := RCLabels::paste_pref_suff(pref = "Resources",
