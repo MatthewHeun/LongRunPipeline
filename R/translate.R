@@ -6,7 +6,9 @@
 #'
 #' @export
 translate_to_clpfu <- function(.df) {
+
   .df |>
+    dplyr::filter(!startsWith(out_Hierarchy, "Losses")) |>
     dplyr::mutate(
       # Get rid of unneeded columns
       in_Group = NULL,

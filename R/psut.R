@@ -61,9 +61,11 @@ add_psut_matnames <- function(.df,
       "{coltypes}" := industry
     )
   # R matrix entries are identified by rows where
-  # the t_Type starts with Primary
+  # the t_Type starts with Primary and
+  # the direction is "in_Quantity".
   R <- .df |>
-    dplyr::filter(startsWith(.data[["t_Type"]], "Primary")) |>
+    dplyr::filter(startsWith(.data[["t_Type"]], "Primary"),
+                  .data[["direction"]] == "in_Quantity") |>
     dplyr::mutate(
       "{matnames}" := R,
       "{rownames}" := RCLabels::paste_pref_suff(pref = "Resources",
@@ -88,7 +90,9 @@ add_psut_matnames <- function(.df,
       t_Efficiency = NULL,
       out_Name = NULL,
       out_Sector = NULL
-    )
+    ) |>
+    # Eliminate duplicated input energy rows.
+    unique()
 }
 
 
@@ -108,8 +112,6 @@ make_lr_psut <- function(.df,
                          coltypes = IEATools::mat_meta_cols$coltypes,
                          industry = IEATools::row_col_types$industry,
                          product = IEATools::row_col_types$product) {
-
-  browser()
 
   S_units_df <- .df |>
     calc_S_units(matnames = matnames,
