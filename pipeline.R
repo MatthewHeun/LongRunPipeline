@@ -20,7 +20,6 @@ list(
 
 
   # Load long-run data ---------------------------------------------------------
-
   ## LRData
   tar_target(
     LRData,
@@ -29,22 +28,38 @@ list(
 
 
   # Translate data -------------------------------------------------------------
+  ## TranslatedData
   tar_target(
     TranslatedData,
     translate_to_clpfu(LRData)
   ),
 
-  # Add matrix names -----------------------------------------------------------
+
+  # Separate last stage final and last stage useful versions -------------------
+  ## SeparatedFU
   tar_target(
-    WithMatnames,
-    add_psut_matnames(TranslatedData)
+    SeparatedFU,
+    separate_last_stages(TranslatedData)
   ),
 
+
+  # Add matrix names -----------------------------------------------------------
+  ## WithMatnames
+  tar_target(
+    WithMatnames,
+    add_psut_matnames(SeparatedFU)
+  ),
+
+
   # Convert to PSUT format -----------------------------------------------------
+  ## PSUTLR
   tar_target(
     PSUTLR,
     make_lr_psut(WithMatnames)
   )
+
+
+  # Check energy balances ------------------------------------------------------
 
 
 
