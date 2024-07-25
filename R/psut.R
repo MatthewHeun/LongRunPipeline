@@ -73,9 +73,8 @@ add_psut_matnames <- function(.df,
                               in_sector = "in_Sector",
                               out_sector = "out_Sector",
                               in_quantity = "in_Quantity",
+                              out_quantity = "out_Quantity",
                               primary = "Primary") {
-
-  browser()
 
   # R matrix entries are identified by rows where
   # the t_Type starts with Primary and
@@ -88,17 +87,18 @@ add_psut_matnames <- function(.df,
       "{rownames}" := RCLabels::paste_pref_suff(pref = "Resources",
                                                 suff = in_Name,
                                                 notation = RCLabels::of_notation),
-      "{colnames}" := in_name,
+      "{colnames}" := .data[[in_name]],
       "{rowtypes}" := industry,
       "{coltypes}" := product
     )
+
   # U and V matrices are easy to identify based on
   # in and out quantities
   UV_mats <- .df |>
     dplyr::mutate(
       "{matnames}" := dplyr::case_when(
-        direction == "in_Quantity" ~ U_feed,
-        direction == "out_Quantity" ~ V,
+        direction == in_quantity ~ U_feed,
+        direction == out_quantity ~ V,
         TRUE ~ NA_character_
       ),
       "{rownames}" := dplyr::case_when(
@@ -120,10 +120,11 @@ add_psut_matnames <- function(.df,
         .data[[matnames]] == V ~ product
       )
     )
+
   # Calculate Y matrices when last stage is final
   Y_final_mats <- .df |>
     dplyr::filter(.data[[out_sector]] != "Unspecified",
-                  .data[[direction]] == in_quantity,
+                  .data[[direction]] == out_quantity,
                   .data[[t_type]] == "Gross Final to Final",
                   .data[[last_stage]] == final) |>
     dplyr::mutate(
@@ -153,15 +154,15 @@ add_psut_matnames <- function(.df,
       "{matvals}" := e_dot
     ) |>
     dplyr::mutate(
-      .data[[direction]] := NULL,
-      .data[[in_name]] := NULL,
-      .data[[in_sector]] := NULL,
-      .data[[t_type]] := NULL,
-      .data[[t_group]] := NULL,
-      .data[[t_name]] := NULL,
-      .data[[t_efficiency]] := NULL,
-      .data[[out_name]] := NULL,
-      .data[[out_sector]] := NULL
+      "{direction}" := NULL,
+      "{in_name}" := NULL,
+      "{in_sector}" := NULL,
+      "{t_type}" := NULL,
+      "{t_group}" := NULL,
+      "{t_name}" := NULL,
+      "{t_efficiency}" := NULL,
+      "{out_name}" := NULL,
+      "{out_sector}" := NULL
     ) |>
     # Eliminate duplicated input energy rows.
     unique()
@@ -190,7 +191,7 @@ make_lr_psut <- function(.df,
                  rownames = rownames,
                  colnames = colnames)
   .df |>
-    dplyr::group_by(Dataset, Country, Year, EnergyType, matnames) |>
+    dplyr::group_by(Dataset, Country, Year, EnergyType, LastStage, matnames) |>
     matsindf::collapse_to_matrices(matnames = matnames,
                                    matvals = matvals,
                                    rownames = rownames,
