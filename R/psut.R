@@ -16,7 +16,7 @@ separate_last_stages <- function(.df,
                                  t_Type = "t_Type",
                                  final = IEATools::last_stages$final,
                                  useful = IEATools::last_stages$useful,
-                                 final_to_useful = "Final to useful") {
+                                 final_to_useful = "Final to Useful") {
 
   # Create the last stage Final version
   ls_final <- .df |>
@@ -92,6 +92,8 @@ add_psut_matnames <- function(.df,
       "{coltypes}" := product
     )
 
+  browser()
+
   # U and V matrices are easy to identify based on
   # in and out quantities
   UV_mats <- .df |>
@@ -137,7 +139,7 @@ add_psut_matnames <- function(.df,
   # Calculate Y matrices when last stage is useful
   Y_useful_mats <- .df |>
     dplyr::filter(.data[[out_sector]] != "Unspecified",
-                  .data[[direction]] == in_quantity,
+                  .data[[direction]] == out_quantity,
                   .data[[t_type]] == "Final to Useful",
                   .data[[last_stage]] == useful) |>
     dplyr::mutate(
