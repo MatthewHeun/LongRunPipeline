@@ -92,8 +92,6 @@ add_psut_matnames <- function(.df,
       "{coltypes}" := product
     )
 
-  browser()
-
   # U and V matrices are easy to identify based on
   # in and out quantities
   UV_mats <- .df |>
