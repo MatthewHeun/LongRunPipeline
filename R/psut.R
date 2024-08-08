@@ -46,6 +46,7 @@ separate_last_stages <- function(.df,
 #'
 #' @export
 add_psut_matnames <- function(.df,
+                              tol = sqrt(.Machine$double.eps),
                               R = IEATools::psut_cols$R,
                               U = IEATools::psut_cols$U,
                               U_feed = IEATools::psut_cols$U_feed,
@@ -148,10 +149,10 @@ add_psut_matnames <- function(.df,
       "{coltypes}" := industry
     )
 
-  # Now stack the data frames and return
-  dplyr::bind_rows(R_mats, UV_mats, Y_final_mats, Y_useful_mats) |>
+  # Now stack the data frames and use unique() for an initial check on values.
+  out <- dplyr::bind_rows(R_mats, UV_mats, Y_final_mats, Y_useful_mats) |>
     dplyr::rename(
-      "{matvals}" := e_dot
+      "{matvals}" := dplyr::all_of(e_dot)
     ) |>
     dplyr::mutate(
       "{direction}" := NULL,
@@ -164,8 +165,23 @@ add_psut_matnames <- function(.df,
       "{out_name}" := NULL,
       "{out_sector}" := NULL
     ) |>
-    # Eliminate duplicated input energy rows.
+    # Eliminate duplicated rows.
     unique()
+
+  # Now do a further sweep to look for values within tolerance.
+  out |>
+    matsindf::group_by_everything_except(matvals) |>
+    dplyr::mutate(
+      diff = .data[[matvals]] - dplyr::lag(.data[[matvals]],
+                                           default = dplyr::first(.data[[matvals]])),
+      is_different = abs(diff) > tol
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::filter(!(abs(diff) > 0 & !is_different)) |>
+    dplyr::mutate(
+      diff = NULL,
+      is_different = NULL
+    )
 }
 
 
@@ -224,6 +240,7 @@ calc_S_units <- function(.df,
                          V = IEATools::psut_cols$V,
                          Y = IEATools::psut_cols$Y,
                          s_units = IEATools::psut_cols$s_units) {
+
   # At this point, we have a data frame of matnames and row/col names.
   # Use these to create the S_units column of vectors.
   .df |>
