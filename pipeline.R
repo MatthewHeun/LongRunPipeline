@@ -64,7 +64,6 @@ list(
   targets::tar_target(
     Balanced,
     PSUTLR |>
-      dplyr::filter(Dataset == "rail", Year == 1840) |>
       Recca::verify_SUT_energy_balance_with_units()
   )
 
