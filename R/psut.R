@@ -1,3 +1,41 @@
+
+#' Separate last stage final from last stage useful
+#'
+#' The Mexer database format includes a `LastStage` column
+#' that specifies whether the last stage of the ECC is final or useful energy.
+#' This function separates the raw data in Rodrigo format
+#' into last stage final and last stage useful versions
+#'
+#' @param .df A data frame, the `TranslatedData` target.
+#'
+#' @return A data frame with a new `LastStage` column filled with "Final" or "Useful"
+#'
+#' @export
+separate_last_stages <- function(.df,
+                                 last_stage = IEATools::iea_cols$last_stage,
+                                 t_Type = "t_Type",
+                                 final = IEATools::last_stages$final,
+                                 useful = IEATools::last_stages$useful,
+                                 final_to_useful = "Final to Useful") {
+
+  # Create the last stage Final version
+  ls_final <- .df |>
+    # Eliminate the final-to-useful transformations
+    dplyr::filter(.data[[t_Type]] != final_to_useful) |>
+    dplyr::mutate(
+      "{last_stage}" := final
+    )
+
+  # Create the last stage Useful version
+  ls_useful <- .df |>
+    dplyr::mutate(
+      "{last_stage}" := useful
+    )
+
+  dplyr::bind_rows(ls_final, ls_useful)
+}
+
+
 #' Add matrix names for the PSUT format
 #'
 #' @param .df A data frame from the TranslatedData target.
@@ -8,11 +46,16 @@
 #'
 #' @export
 add_psut_matnames <- function(.df,
+                              tol = sqrt(.Machine$double.eps),
                               R = IEATools::psut_cols$R,
                               U = IEATools::psut_cols$U,
                               U_feed = IEATools::psut_cols$U_feed,
                               V = IEATools::psut_cols$V,
                               Y = IEATools::psut_cols$Y,
+                              e_dot = IEATools::iea_cols$e_dot,
+                              last_stage = IEATools::iea_cols$last_stage,
+                              final = IEATools::last_stages$final,
+                              useful = IEATools::last_stages$useful,
                               matnames = IEATools::mat_meta_cols$matnames,
                               matvals = IEATools::mat_meta_cols$matvals,
                               rownames = IEATools::mat_meta_cols$rownames,
@@ -20,25 +63,54 @@ add_psut_matnames <- function(.df,
                               rowtypes = IEATools::mat_meta_cols$rowtypes,
                               coltypes = IEATools::mat_meta_cols$coltypes,
                               industry = IEATools::row_col_types$industry,
-                              product = IEATools::row_col_types$product) {
+                              product = IEATools::row_col_types$product,
+                              in_name = "in_Name",
+                              t_name = "t_Name",
+                              t_type = "t_Type",
+                              t_group = "t_Group",
+                              t_efficiency = "t_Efficiency",
+                              direction = "direction",
+                              out_name = "out_Name",
+                              in_sector = "in_Sector",
+                              out_sector = "out_Sector",
+                              in_quantity = "in_Quantity",
+                              out_quantity = "out_Quantity",
+                              primary = "Primary") {
+
+  # R matrix entries are identified by rows where
+  # the t_Type starts with Primary and
+  # the direction is "in_Quantity".
+  R_mats <- .df |>
+    dplyr::filter(startsWith(.data[[t_type]], primary),
+                  .data[[direction]] == in_quantity) |>
+    dplyr::mutate(
+      "{matnames}" := R,
+      "{rownames}" := RCLabels::paste_pref_suff(pref = "Resources",
+                                                suff = in_Name,
+                                                notation = RCLabels::of_notation),
+      "{colnames}" := .data[[in_name]],
+      "{rowtypes}" := industry,
+      "{coltypes}" := product
+    )
 
   # U and V matrices are easy to identify based on
   # in and out quantities
-
-  UV <- .df |>
+  UV_mats <- .df |>
     dplyr::mutate(
       "{matnames}" := dplyr::case_when(
-        direction == "in_Quantity" ~ U_feed,
-        direction == "out_Quantity" ~ V,
+        direction == in_quantity ~ U_feed,
+        direction == out_quantity ~ V,
         TRUE ~ NA_character_
       ),
       "{rownames}" := dplyr::case_when(
-        .data[[matnames]] == U_feed ~ in_Name,
-        .data[[matnames]] == V ~ t_Name
+        .data[[matnames]] == U_feed ~ .data[[in_name]],
+        .data[[matnames]] == V ~ .data[[t_name]],
+        TRUE ~ NA_character_
       ),
       "{colnames}" := dplyr::case_when(
-        .data[[matnames]] == U_feed ~ t_Name,
-        .data[[matnames]] == V ~ out_Name
+        .data[[matnames]] == U_feed ~ .data[[t_name]],
+        .data[[matnames]] == V ~ .data[[out_name]],
+        TRUE ~ NA_character_
       ),
       "{rowtypes}" := dplyr::case_when(
         .data[[matnames]] == U_feed ~ product,
@@ -49,50 +121,67 @@ add_psut_matnames <- function(.df,
         .data[[matnames]] == V ~ product
       )
     )
-  # Y matrix entries are identified by rows where
-  # the out_Sector column is not "Unspecified"
-  Y <- .df |>
-    dplyr::filter(out_Sector != "Unspecified") |>
+
+  # Calculate Y matrices when last stage is final
+  Y_final_mats <- .df |>
+    dplyr::filter(.data[[out_sector]] != "Unspecified",
+                  .data[[direction]] == out_quantity,
+                  .data[[t_type]] == "Gross Final to Final",
+                  .data[[last_stage]] == final) |>
     dplyr::mutate(
       "{matnames}" := Y,
-      "{rownames}" := in_Name,
-      "{colnames}" := out_Sector,
+      "{rownames}" := .data[[out_name]],
+      "{colnames}" := .data[[out_sector]],
       "{rowtypes}" := product,
       "{coltypes}" := industry
     )
-  # R matrix entries are identified by rows where
-  # the t_Type starts with Primary and
-  # the direction is "in_Quantity".
-  R <- .df |>
-    dplyr::filter(startsWith(.data[["t_Type"]], "Primary"),
-                  .data[["direction"]] == "in_Quantity") |>
+  # Calculate Y matrices when last stage is useful
+  Y_useful_mats <- .df |>
+    dplyr::filter(.data[[out_sector]] != "Unspecified",
+                  .data[[direction]] == out_quantity,
+                  .data[[t_type]] == "Final to Useful",
+                  .data[[last_stage]] == useful) |>
     dplyr::mutate(
-      "{matnames}" := R,
-      "{rownames}" := RCLabels::paste_pref_suff(pref = "Resources",
-                                                suff = in_Name,
-                                                notation = RCLabels::of_notation),
-      "{colnames}" := in_Name,
-      "{rowtypes}" := industry,
-      "{coltypes}" := product
+      "{matnames}" := Y,
+      "{rownames}" := .data[[out_name]],
+      "{colnames}" := .data[[out_sector]],
+      "{rowtypes}" := product,
+      "{coltypes}" := industry
     )
-  # Now stack the data frames and return
-  dplyr::bind_rows(R, UV, Y) |>
+
+  # Now stack the data frames and use unique() for an initial check on values.
+  out <- dplyr::bind_rows(R_mats, UV_mats, Y_final_mats, Y_useful_mats) |>
     dplyr::rename(
-      "{matvals}" := E_dot
+      "{matvals}" := dplyr::all_of(e_dot)
     ) |>
     dplyr::mutate(
-      direction = NULL,
-      in_Name = NULL,
-      in_Sector = NULL,
-      t_Type = NULL,
-      t_Group = NULL,
-      t_Name = NULL,
-      t_Efficiency = NULL,
-      out_Name = NULL,
-      out_Sector = NULL
+      "{direction}" := NULL,
+      "{in_name}" := NULL,
+      "{in_sector}" := NULL,
+      "{t_type}" := NULL,
+      "{t_group}" := NULL,
+      "{t_name}" := NULL,
+      "{t_efficiency}" := NULL,
+      "{out_name}" := NULL,
+      "{out_sector}" := NULL
     ) |>
-    # Eliminate duplicated input energy rows.
+    # Eliminate duplicated rows.
     unique()
+
+  # Now do a further sweep to look for values within tolerance.
+  out |>
+    matsindf::group_by_everything_except(matvals) |>
+    dplyr::mutate(
+      diff = .data[[matvals]] - dplyr::lag(.data[[matvals]],
+                                           default = dplyr::first(.data[[matvals]])),
+      is_different = abs(diff) > tol
+    ) |>
+    dplyr::ungroup() |>
+    dplyr::filter(!(abs(diff) > 0 & !is_different)) |>
+    dplyr::mutate(
+      diff = NULL,
+      is_different = NULL
+    )
 }
 
 
@@ -118,7 +207,7 @@ make_lr_psut <- function(.df,
                  rownames = rownames,
                  colnames = colnames)
   .df |>
-    dplyr::group_by(Dataset, Country, Year, EnergyType, matnames) |>
+    dplyr::group_by(Dataset, Country, Year, EnergyType, LastStage, matnames) |>
     matsindf::collapse_to_matrices(matnames = matnames,
                                    matvals = matvals,
                                    rownames = rownames,
@@ -151,6 +240,7 @@ calc_S_units <- function(.df,
                          V = IEATools::psut_cols$V,
                          Y = IEATools::psut_cols$Y,
                          s_units = IEATools::psut_cols$s_units) {
+
   # At this point, we have a data frame of matnames and row/col names.
   # Use these to create the S_units column of vectors.
   .df |>

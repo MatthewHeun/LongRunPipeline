@@ -5,7 +5,14 @@
 #' @return A translated data frame.
 #'
 #' @export
-translate_to_clpfu <- function(.df) {
+translate_to_clpfu <- function(.df,
+                               e_dot = IEATools::iea_cols$e_dot,
+                               energy = "Energy",
+                               exergy = "Exergy",
+                               etype = IEATools::energy_types$e,
+                               xtype = IEATools::energy_types$x,
+                               in_quantity = "in_Quantity",
+                               out_quantity = "out_Quantity") {
 
   .df |>
     dplyr::filter(!startsWith(out_Hierarchy, "Losses")) |>
@@ -19,15 +26,15 @@ translate_to_clpfu <- function(.df) {
       Continent = NULL,
       # Adjust energy and exergy strings
       property = dplyr::case_when(
-        property == "Energy" ~ "E",
-        property == "Exergy" ~ "X",
+        property == "Energy" ~ etype,
+        property == "Exergy" ~ xtype,
         TRUE ~ NA_character_
       ),
-      in_Quantity = dplyr::case_when(
+      "{in_quantity}" := dplyr::case_when(
         in_Unit == "GWh" ~ in_Quantity * 3.6, # Convert GWh to TJ
         TRUE ~ NA_real_
       ),
-      out_Quantity = dplyr::case_when(
+      "{out_quantity}" := dplyr::case_when(
         out_Unit == "GWh" ~ out_Quantity * 3.6, # Convert GWhr to TJ
         TRUE ~ NA_real_
       ),
@@ -44,5 +51,7 @@ translate_to_clpfu <- function(.df) {
     ) |>
     # Eliminate rows where both in_Quantity and out_Quantity are 0
     dplyr::filter(in_Quantity != 0 & out_Quantity != 0) |>
-    tidyr::pivot_longer(dplyr::all_of(c("in_Quantity", "out_Quantity")), names_to = "direction", values_to = "E_dot")
+    tidyr::pivot_longer(dplyr::all_of(c("in_Quantity", "out_Quantity")),
+                        names_to = "direction",
+                        values_to = e_dot)
 }
