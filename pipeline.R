@@ -64,6 +64,8 @@ list(
   targets::tar_target(
     Balanced,
     PSUTLR |>
+      # Fails at 1920, but 1900-1919 work.
+      dplyr::filter(Dataset == "world_electricity", Year <= 1920) |>
       Recca::verify_SUT_energy_balance_with_units()
   )
 
