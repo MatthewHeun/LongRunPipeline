@@ -60,7 +60,7 @@ list(
 
 
   # Check energy balances ------------------------------------------------------
-  ## BalancedBeforeLR
+  ## Balanced
   targets::tar_target(
     Balanced,
     PSUTLR |>
