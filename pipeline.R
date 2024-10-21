@@ -66,7 +66,7 @@ list(
     PSUTLR |>
       # Fails at 1920, but 1900-1919 work.
       dplyr::filter(Dataset == "world_electricity",
-                    Year == 1920,
+                    # Year == 1920,
                     LastStage == "Useful",
                     EnergyType == "X") |>
       # Rail 2018 fails, but 1840-2017 all work.
