@@ -91,15 +91,20 @@ add_psut_matnames <- function(.df,
       "{colnames}" := .data[[in_name]],
       "{rowtypes}" := industry,
       "{coltypes}" := product
-    )
+    ) |>
+    clean_up_matrix_df(matvals = matvals, e_dot = e_dot, direction = direction,
+                       in_name = in_name, in_sector = in_sector, t_type = t_type,
+                       t_group = t_group, t_name = t_name, t_efficiency = t_efficiency,
+                       out_name = out_name, out_sector = out_sector) |>
+    unique()
 
   # U and V matrices are easy to identify based on
   # in and out quantities
   UV_mats <- .df |>
     dplyr::mutate(
       "{matnames}" := dplyr::case_when(
-        direction == in_quantity ~ U_feed,
-        direction == out_quantity ~ V,
+        .data[[direction]] == in_quantity ~ U_feed,
+        .data[[direction]] == out_quantity ~ V,
         TRUE ~ NA_character_
       ),
       "{rownames}" := dplyr::case_when(
@@ -120,7 +125,19 @@ add_psut_matnames <- function(.df,
         .data[[matnames]] == U_feed ~ industry,
         .data[[matnames]] == V ~ product
       )
-    )
+    ) |>
+    clean_up_matrix_df(matvals = matvals, e_dot = e_dot, direction = direction,
+                       in_name = in_name, in_sector = in_sector, t_type = t_type,
+                       t_group = t_group, t_name = t_name, t_efficiency = t_efficiency,
+                       out_name = out_name, out_sector = out_sector)
+
+  U_mats <- UV_mats |>
+    dplyr::filter(.data[[matnames]] == U_feed) |>
+    unique()
+  # Don't call unique() on the V matrices,
+  # because we need to keep all of the rows.
+  V_mats <- UV_mats |>
+    dplyr::filter(.data[[matnames]] == V)
 
   # Calculate Y matrices when last stage is final
   Y_final_mats <- .df |>
@@ -134,7 +151,12 @@ add_psut_matnames <- function(.df,
       "{colnames}" := .data[[out_sector]],
       "{rowtypes}" := product,
       "{coltypes}" := industry
-    )
+    ) |>
+    clean_up_matrix_df(matvals = matvals, e_dot = e_dot, direction = direction,
+                       in_name = in_name, in_sector = in_sector, t_type = t_type,
+                       t_group = t_group, t_name = t_name, t_efficiency = t_efficiency,
+                       out_name = out_name, out_sector = out_sector) |>
+    unique()
   # Calculate Y matrices when last stage is useful
   Y_useful_mats <- .df |>
     dplyr::filter(.data[[out_sector]] != "Unspecified",
@@ -147,26 +169,15 @@ add_psut_matnames <- function(.df,
       "{colnames}" := .data[[out_sector]],
       "{rowtypes}" := product,
       "{coltypes}" := industry
-    )
+    ) |>
+    clean_up_matrix_df(matvals = matvals, e_dot = e_dot, direction = direction,
+                       in_name = in_name, in_sector = in_sector, t_type = t_type,
+                       t_group = t_group, t_name = t_name, t_efficiency = t_efficiency,
+                       out_name = out_name, out_sector = out_sector) |>
+    unique()
 
   # Now stack the data frames and use unique() for an initial check on values.
-  out <- dplyr::bind_rows(R_mats, UV_mats, Y_final_mats, Y_useful_mats) |>
-    dplyr::rename(
-      "{matvals}" := dplyr::all_of(e_dot)
-    ) |>
-    dplyr::mutate(
-      "{direction}" := NULL,
-      "{in_name}" := NULL,
-      "{in_sector}" := NULL,
-      "{t_type}" := NULL,
-      "{t_group}" := NULL,
-      "{t_name}" := NULL,
-      "{t_efficiency}" := NULL,
-      "{out_name}" := NULL,
-      "{out_sector}" := NULL
-    ) |>
-    # Eliminate duplicated rows.
-    unique()
+  out <- dplyr::bind_rows(R_mats, U_mats, V_mats, Y_final_mats, Y_useful_mats)
 
   # Now do a further sweep to look for values within tolerance.
   out |>
@@ -181,6 +192,47 @@ add_psut_matnames <- function(.df,
     dplyr::mutate(
       diff = NULL,
       is_different = NULL
+    )
+}
+
+
+#' A convenience function for assigning PSUT matrix names
+#'
+#' @param .matdf A data frame into which matrix names are added.
+#' @param matvals The name of the matrix values column.
+#' @param e_dot The name of the energy flow column.
+#' @param direction,in_name,in_sector,t_type,t_group,t_name,t_efficiency,out_name,out_sector The names of columns to be removed, if present.
+#'
+#' @return A data frame with several columns removed and the `matvals` column renamed to `e_dot`.
+#'
+#' @export
+clean_up_matrix_df <- function(.matdf,
+                               matvals,
+                               e_dot,
+                               direction,
+                               in_name,
+                               in_sector,
+                               t_type,
+                               t_group,
+                               t_name,
+                               t_efficiency,
+                               out_name,
+                               out_sector) {
+
+  .matdf |>
+    dplyr::rename(
+      "{matvals}" := dplyr::all_of(e_dot)
+    ) |>
+    dplyr::mutate(
+      "{direction}" := NULL,
+      "{in_name}" := NULL,
+      "{in_sector}" := NULL,
+      "{t_type}" := NULL,
+      "{t_group}" := NULL,
+      "{t_name}" := NULL,
+      "{t_efficiency}" := NULL,
+      "{out_name}" := NULL,
+      "{out_sector}" := NULL
     )
 }
 
