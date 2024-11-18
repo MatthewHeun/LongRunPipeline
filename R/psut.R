@@ -100,6 +100,7 @@ add_psut_matnames <- function(.df,
 
   # U and V matrices are easy to identify based on
   # in and out quantities
+
   UV_mats <- .df |>
     dplyr::mutate(
       "{matnames}" := dplyr::case_when(
@@ -179,17 +180,37 @@ add_psut_matnames <- function(.df,
   # Now stack the data frames and use unique() for an initial check on values.
   out <- dplyr::bind_rows(R_mats, U_mats, V_mats, Y_final_mats, Y_useful_mats)
 
-  # Now do a further sweep to look for values within tolerance.
+  # Now do a further sweep to look for values within tolerance
+  # so long as they are not in the V matrix.
+  # out |>
+  #   matsindf::group_by_everything_except(matvals) |>
+  #   dplyr::mutate(
+  #     diff = .data[[matvals]] - dplyr::lag(.data[[matvals]],
+  #                                          # default = dplyr::first(.data[[matvals]])),
+  #                                          default = 0),
+  #     is_different = abs(diff) > tol
+  #   ) |>
+  #   dplyr::ungroup() |>
+  #   dplyr::filter((!(abs(diff) > 0 & !is_different)) |
+  #                   # Want to keep all entries in the V matrix.
+  #                   .data[[matnames]] == "V") |>
+  #   dplyr::mutate(
+  #     diff = NULL,
+  #     is_different = NULL
+  #   )
   out |>
     matsindf::group_by_everything_except(matvals) |>
     dplyr::mutate(
-      diff = .data[[matvals]] - dplyr::lag(.data[[matvals]],
-                                           default = dplyr::first(.data[[matvals]])),
-      is_different = abs(diff) > tol
+      lagged = dplyr::lag(.data[[matvals]], default = 0),
+      diff = .data[[matvals]] - lagged,
+      # Remove duplicates, unless they are in the V matrix,
+      # where we need to keep all values.
+      remove = abs(diff) < tol & .data[[matnames]] != "V"
     ) |>
     dplyr::ungroup() |>
-    dplyr::filter(!(abs(diff) > 0 & !is_different)) |>
+    dplyr::filter(! remove) |>
     dplyr::mutate(
+      lagged = NULL,
       diff = NULL,
       is_different = NULL
     )
