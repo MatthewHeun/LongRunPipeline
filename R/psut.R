@@ -162,7 +162,11 @@ add_psut_matnames <- function(.df,
                        in_name = in_name, in_sector = in_sector, t_type = t_type,
                        t_group = t_group, t_name = t_name, t_efficiency = t_efficiency,
                        out_name = out_name, out_sector = out_sector) |>
-    unique()
+    matsindf::group_by_everything_except(matvals) |>
+    # Sum all these Y entries that come from
+    # various individual inputs for making final and useful energy products.
+    dplyr::summarise(matvals = sum(matvals), .groups = "drop")
+
   # Calculate Y matrices when last stage is useful
   Y_useful_mats <- .df |>
     dplyr::filter(.data[[out_sector]] != "Unspecified",
