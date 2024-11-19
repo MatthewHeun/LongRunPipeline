@@ -187,22 +187,6 @@ add_psut_matnames <- function(.df,
 
   # Now do a further sweep to look for values within tolerance
   # so long as they are not in the V matrix.
-  # out |>
-  #   matsindf::group_by_everything_except(matvals) |>
-  #   dplyr::mutate(
-  #     diff = .data[[matvals]] - dplyr::lag(.data[[matvals]],
-  #                                          # default = dplyr::first(.data[[matvals]])),
-  #                                          default = 0),
-  #     is_different = abs(diff) > tol
-  #   ) |>
-  #   dplyr::ungroup() |>
-  #   dplyr::filter((!(abs(diff) > 0 & !is_different)) |
-  #                   # Want to keep all entries in the V matrix.
-  #                   .data[[matnames]] == "V") |>
-  #   dplyr::mutate(
-  #     diff = NULL,
-  #     is_different = NULL
-  #   )
   out |>
     matsindf::group_by_everything_except(matvals) |>
     dplyr::mutate(
