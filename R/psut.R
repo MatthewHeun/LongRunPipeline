@@ -135,10 +135,15 @@ add_psut_matnames <- function(.df,
   U_mats <- UV_mats |>
     dplyr::filter(.data[[matnames]] == U_feed) |>
     unique()
+
   # Don't call unique() on the V matrices,
   # because we need to keep all of the rows.
   V_mats <- UV_mats |>
-    dplyr::filter(.data[[matnames]] == V)
+    dplyr::filter(.data[[matnames]] == V) |>
+    matsindf::group_by_everything_except(matvals) |>
+    # Sum all these V entries that come from
+    # various individual inputs for making final and useful energy products.
+    dplyr::summarise(matvals = sum(matvals), .groups = "drop")
 
   # Calculate Y matrices when last stage is final
   Y_final_mats <- .df |>
