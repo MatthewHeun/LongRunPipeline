@@ -23,8 +23,7 @@ list(
   ## LRData
   tar_target(
     LRData,
-    load_long_run_data(paths = c(ElectricityFilePath, RailFilePath)) |>
-      dplyr::filter(dataset == "world_electricity", Year == 1920)
+    load_long_run_data(paths = c(ElectricityFilePath, RailFilePath))
   ),
 
 
