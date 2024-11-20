@@ -100,6 +100,7 @@ add_psut_matnames <- function(.df,
 
   # U and V matrices are easy to identify based on
   # in and out quantities
+
   UV_mats <- .df |>
     dplyr::mutate(
       "{matnames}" := dplyr::case_when(
@@ -134,10 +135,15 @@ add_psut_matnames <- function(.df,
   U_mats <- UV_mats |>
     dplyr::filter(.data[[matnames]] == U_feed) |>
     unique()
+
   # Don't call unique() on the V matrices,
   # because we need to keep all of the rows.
   V_mats <- UV_mats |>
-    dplyr::filter(.data[[matnames]] == V)
+    dplyr::filter(.data[[matnames]] == V) |>
+    matsindf::group_by_everything_except(matvals) |>
+    # Sum all these V entries that come from
+    # various individual inputs for making final and useful energy products.
+    dplyr::summarise(matvals = sum(matvals), .groups = "drop")
 
   # Calculate Y matrices when last stage is final
   Y_final_mats <- .df |>
@@ -156,7 +162,11 @@ add_psut_matnames <- function(.df,
                        in_name = in_name, in_sector = in_sector, t_type = t_type,
                        t_group = t_group, t_name = t_name, t_efficiency = t_efficiency,
                        out_name = out_name, out_sector = out_sector) |>
-    unique()
+    matsindf::group_by_everything_except(matvals) |>
+    # Sum all these Y entries that come from
+    # various individual inputs for making final and useful energy products.
+    dplyr::summarise(matvals = sum(matvals), .groups = "drop")
+
   # Calculate Y matrices when last stage is useful
   Y_useful_mats <- .df |>
     dplyr::filter(.data[[out_sector]] != "Unspecified",
@@ -179,17 +189,21 @@ add_psut_matnames <- function(.df,
   # Now stack the data frames and use unique() for an initial check on values.
   out <- dplyr::bind_rows(R_mats, U_mats, V_mats, Y_final_mats, Y_useful_mats)
 
-  # Now do a further sweep to look for values within tolerance.
+  # Now do a further sweep to look for values within tolerance
+  # so long as they are not in the V matrix.
   out |>
     matsindf::group_by_everything_except(matvals) |>
     dplyr::mutate(
-      diff = .data[[matvals]] - dplyr::lag(.data[[matvals]],
-                                           default = dplyr::first(.data[[matvals]])),
-      is_different = abs(diff) > tol
+      lagged = dplyr::lag(.data[[matvals]], default = 0),
+      diff = .data[[matvals]] - lagged,
+      # Remove duplicates, unless they are in the V matrix,
+      # where we need to keep all values.
+      remove = abs(diff) < tol & .data[[matnames]] != "V"
     ) |>
     dplyr::ungroup() |>
-    dplyr::filter(!(abs(diff) > 0 & !is_different)) |>
+    dplyr::filter(! remove) |>
     dplyr::mutate(
+      lagged = NULL,
       diff = NULL,
       is_different = NULL
     )
