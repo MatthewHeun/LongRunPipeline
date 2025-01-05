@@ -23,7 +23,9 @@ list(
   ## LRData
   tar_target(
     LRData,
-    load_long_run_data(paths = c(ElectricityFilePath, RailFilePath))
+    # Uncomment after debugging Rail data.
+    # load_long_run_data(paths = c(ElectricityFilePath, RailFilePath))
+    load_long_run_data(paths = c(RailFilePath))
   ),
 
 
@@ -64,16 +66,6 @@ list(
   targets::tar_target(
     Balanced,
     PSUTLR |>
-      # Delete the following filter after debugging !!!!!!!!!
-      # Fails at 1920, but 1900-1919 work.
-      # dplyr::filter(Dataset == "world_electricity",
-      #               Year == 1921,
-      #               LastStage == "Final",
-      #               EnergyType == "X") |>
-      # dplyr::filter(Dataset == "rail") |>
       Recca::verify_SUT_energy_balance_with_units()
   )
-
-
-
 )
