@@ -13,8 +13,8 @@ list(
 
   ## RailFilePath
   targets::tar_target_raw(
-    "RailFilePath",
-    rail_file,
+    "TransportFilePath",
+    transport_file,
     format = "file"
   ),
 
@@ -24,8 +24,8 @@ list(
   tar_target(
     LRData,
     # Uncomment after debugging Rail data.
-    # load_long_run_data(paths = c(ElectricityFilePath, RailFilePath))
-    load_long_run_data(paths = c(RailFilePath))
+    # load_long_run_data(paths = c(ElectricityFilePath, TransportFilePath))
+    load_long_run_data(paths = c(TransportFilePath))
   ),
 
 
