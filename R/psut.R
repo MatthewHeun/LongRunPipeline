@@ -77,8 +77,6 @@ add_psut_matnames <- function(.df,
                               out_quantity = "out_Quantity",
                               primary = "Primary") {
 
-  browser()
-
   # R matrix entries are identified by rows where
   # the t_Type starts with Primary and
   # the direction is "in_Quantity".
