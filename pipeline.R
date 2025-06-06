@@ -24,9 +24,9 @@ list(
   tar_target(
     LRData,
     # Uncomment after debugging Rail data.
-    # load_long_run_data(paths = c(ElectricityFilePath, TransportFilePath))
-    load_long_run_data(paths = c(TransportFilePath)) |>
-      dplyr::filter(Year == 1815)
+    load_long_run_data(paths = c(ElectricityFilePath, TransportFilePath))
+  #   load_long_run_data(paths = c(ElectricityFilePath)) |>
+  #     dplyr::filter(Year == 1900)
   ),
 
 
