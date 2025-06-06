@@ -79,14 +79,21 @@ add_psut_matnames <- function(.df,
 
   # R matrix entries are identified by rows where
   # the t_Type starts with Primary and
-  # the direction is "in_Quantity".
+  # the direction is "in_Name".
+  # Note that in_Name could be using from_notation,
+  # for example "Wind [from Resources]".
+  # In that case, the rowname should be "Resources [of Wind]"
+  # and not "Resources [of Wind [from Resources]]".
+  # So test for whether the in_name has from notation.
+  # If so, use only the prefix.
+
   R_mats <- .df |>
     dplyr::filter(startsWith(.data[[t_type]], primary),
                   .data[[direction]] == in_quantity) |>
     dplyr::mutate(
       "{matnames}" := R,
       "{rownames}" := RCLabels::paste_pref_suff(pref = "Resources",
-                                                suff = in_Name,
+                                                suff = RCLabels::get_nouns(.data[[in_name]], inf_notation = FALSE, notation = RCLabels::from_notation),
                                                 notation = RCLabels::of_notation),
       "{colnames}" := .data[[in_name]],
       "{rowtypes}" := industry,
