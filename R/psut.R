@@ -75,7 +75,8 @@ add_psut_matnames <- function(.df,
                               out_sector = "out_Sector",
                               in_quantity = "in_Quantity",
                               out_quantity = "out_Quantity",
-                              primary = "Primary") {
+                              primary = "Primary",
+                              resources = "Resources") {
 
   # R matrix entries are identified by rows where
   # the t_Type starts with Primary and
@@ -88,7 +89,8 @@ add_psut_matnames <- function(.df,
   # If so, use only the prefix.
 
   R_mats <- .df |>
-    dplyr::filter(startsWith(.data[[t_type]], primary),
+    # dplyr::filter(startsWith(.data[[t_type]], primary),
+    dplyr::filter(startsWith(.data[[t_type]], resources),
                   .data[[direction]] == in_quantity) |>
     dplyr::mutate(
       "{matnames}" := R,
