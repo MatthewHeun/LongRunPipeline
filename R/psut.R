@@ -90,6 +90,8 @@ add_psut_matnames <- function(.df,
 
   R_mats <- .df |>
     # dplyr::filter(startsWith(.data[[t_type]], primary),
+    # As of 20 June 2025, we are now detecting "Resources to Primary"
+    # to identify R matrix entries.
     dplyr::filter(startsWith(.data[[t_type]], resources),
                   .data[[direction]] == in_quantity) |>
     dplyr::mutate(
