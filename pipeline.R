@@ -64,6 +64,6 @@ list(
   targets::tar_target(
     Balanced,
     PSUTLR |>
-      Recca::verify_SUT_energy_balance_with_units()
+      Recca::verify_inter_industry_balance()
   )
 )
