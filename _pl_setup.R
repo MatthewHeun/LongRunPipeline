@@ -7,5 +7,5 @@
 
 # Get file paths ---------------------------------------------------------------
 
-electricity_file <- file.path("data", "world_electricity_finalrevisited_v19_energy.xlsx")
+electricity_file <- file.path("data", "world_electricity_finalrevisited_v20_energy.xlsx")
 transport_file <- file.path("data", "EnergyRecords_Transport_extract_V19.xlsx")
