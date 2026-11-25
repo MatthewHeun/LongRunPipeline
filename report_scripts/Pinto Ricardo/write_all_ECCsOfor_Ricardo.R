@@ -1,3 +1,7 @@
+# This script reads and writes to Excel all of the
+# ECCs in the long-run database.
+# Seeing all of the ECCs is helpful for debugging purposes.
+
 output_dir <- file.path("~/OneDrive - University of Leeds/Fellowship 1960-2015 PFU database research/Output Data/LongRun Database")
 
 tar_read(PSUTLR) |>
